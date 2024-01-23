@@ -2,7 +2,7 @@
  * @Author: ChuandongHuang chuandong_huang@human-horizons.com
  * @Date: 2024-01-22 16:40:16
  * @LastEditors: ChuandongHuang chuandong_huang@human-horizons.com
- * @LastEditTime: 2024-01-23 09:41:10
+ * @LastEditTime: 2024-01-23 11:28:36
  * @Description:
  */
 import {
@@ -14,6 +14,7 @@ import {
   AxesHelper,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import Stats from "three/examples/jsm/libs/stats.module";
 type ThreeConfigType = {
   width: number;
   height: number;
@@ -24,6 +25,7 @@ type ThreeConfigType = {
   control?: boolean;
   axes?: boolean;
   axesSize?: number | undefined;
+  stats?: boolean | undefined;
 };
 export class CreateScene {
   options: ThreeConfigType;
@@ -31,6 +33,7 @@ export class CreateScene {
   camera: PerspectiveCamera | undefined;
   renderer: WebGLRenderer | undefined;
   animationId: number | undefined;
+  stats: Stats | undefined;
   constructor(options: ThreeConfigType) {
     this.options = options;
     // 配置不存在的兜底
@@ -56,6 +59,7 @@ export class CreateScene {
     if (this.options.axes && !this.options.axesSize) {
       this.options.axesSize = 100;
     }
+    if (this.options.stats) this.stats = new Stats();
     this.initScene();
   }
   initScene() {
@@ -64,10 +68,11 @@ export class CreateScene {
       75,
       this.options.width / this.options.height,
       0.1,
-      2000
+      3000
     );
     this.renderer = new WebGLRenderer({
       canvas: this.options.container,
+      antialias: true,
     });
     // 相机位置
     this.camera.position.set(
@@ -83,9 +88,11 @@ export class CreateScene {
       new OrbitControls(this.camera, this.renderer.domElement);
     //   是否需要参考线
     this.options.axes && this.scene.add(new AxesHelper(this.options.axesSize));
-    this.animate();
+    // 是否显示帧率
+    this.stats && document.body.appendChild(this.stats.dom);
     // 监听窗口
     window.addEventListener("reset", this.onWidowResize);
+    this.animate();
   }
   //   添加模型
   addMesh(mesh: Object3D, axes?: boolean) {
@@ -108,6 +115,7 @@ export class CreateScene {
     this.renderer!.setPixelRatio(window.devicePixelRatio);
   }
   animate() {
+    this.stats && this.stats.update();
     this.render();
     this.camera!.updateProjectionMatrix();
     this.animationId = requestAnimationFrame(this.animate.bind(this));
